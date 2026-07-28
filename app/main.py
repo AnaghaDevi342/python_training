@@ -245,7 +245,7 @@ def trends(
     df.set_index("hire_date", inplace=True)
 
     result = (
-        df.resample("M")
+        df.resample("ME")
         .size()
         .reset_index(name="hires")
     )
