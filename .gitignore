@@ -1,0 +1,88 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.coverage
+.coverage.*
+.cache
+.pytest_cache/
+.pyre/
+.python-version
+pip-log.txt
+pip-delete-this-directory.txt
+env/
+venv/
+ENV/
+.venv/
+.venv-1/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.manifest
+*.spec
+
+# VS Code
+.vscode/
+
+# IDEs
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Docker
+*.log
+docker-compose.override.yml
+docker-compose.*.yml
+**/Dockerfile.*
+
+# Environment
+.env
+.env.*
+
+# Database
+*.db
+*.sqlite3
+postgres_data/
+redis_data/
+
+# Python packaging
+htmlcov/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.wheel
+*.egg-info/
+dist/
+build/
+
+# Others
+*.log
+*.tmp
+*.temp
