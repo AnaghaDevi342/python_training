@@ -9,6 +9,12 @@ from fastapi import File
 from fastapi import Depends
 from fastapi import Query
 from fastapi import HTTPException
+from fastapi import APIRouter
+from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
+from app.auth import create_access_token
+from app.auth import get_current_user
+from app.auth import SECRET_KEY
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -38,10 +44,19 @@ def root():
     return {"message": "API Running"}
 
 
+@app.post("/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    if form_data.username != "admin" or form_data.password != SECRET_KEY:
+        raise HTTPException(status_code=401, detail="Invalid username or secret key")
+
+    token = create_access_token({"sub": form_data.username})
+    return {"access_token": token, "token_type": "bearer"}
+
 @app.post("/data/upload")
 async def upload_data(
         file: UploadFile = File(...),
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        user=Depends(get_current_user)
 ):
 
     if not file.filename.endswith(".csv"):
@@ -55,16 +70,6 @@ async def upload_data(
     df.columns = [c.lower() for c in df.columns]
 
     df.drop_duplicates(inplace=True)
-
-    df["hire_date"] = pd.to_datetime(
-        df["hire_date"],
-        errors="coerce"
-    )
-
-    df["salary"] = pd.to_numeric(
-        df["salary"],
-        errors="coerce"
-    )
 
     df.replace({"-": None, " - ": None}, inplace=True)
 
@@ -121,7 +126,8 @@ def get_data(
         page: int = 1,
         per_page: int = 10,
         department: int | None = None,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        user=Depends(get_current_user)
 ):
 
     query = db.query(Employee)
@@ -160,7 +166,8 @@ def get_data(
 @app.get("/data/{employee_id}")
 def get_employee(
         employee_id: int,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        user=Depends(get_current_user)
 ):
 
     employee = (
@@ -180,15 +187,18 @@ def get_employee(
 
 @app.get("/analytics/summary")
 def analytics_summary(
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        user=Depends(get_current_user)
 ):
 
     cache_key = "summary"
 
-    cached = redis_client.get(cache_key)
-
-    if cached:
-        return json.loads(cached)
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            return json.loads(cached)
+    except Exception:
+        cached = None
 
     query = db.query(Employee).all()
 
@@ -214,18 +224,22 @@ def analytics_summary(
         .to_dict(orient="records")
     )
 
-    redis_client.setex(
-        cache_key,
-        300,
-        json.dumps(result)
-    )
+    try:
+        redis_client.setex(
+            cache_key,
+            300,
+            json.dumps(result)
+        )
+    except Exception:
+        pass
 
     return result
 
 
 @app.get("/analytics/trends")
 def trends(
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        user=Depends(get_current_user)
 ):
 
     data = db.query(Employee).all()
